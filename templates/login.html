@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - GPS位置管理系统{% endblock %}
+
+{% block login_content %}
+<div class="container-fluid vh-100">
+    <div class="row h-100">
+        <div class="col-md-6 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="text-center text-white">
+                <i class="fas fa-map-marker-alt fa-5x mb-4"></i>
+                <h1 class="display-4 mb-3">GPS位置管理系统</h1>
+                <p class="lead">车机设备位置监控与管理平台</p>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-center">
+            <div class="card shadow-lg" style="width: 400px;">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h3 class="card-title">管理员登录</h3>
+                        <p class="text-muted">请输入您的登录凭据</p>
+                    </div>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label">密码</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>登录
+                        </button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            默认账号: admin / admin123
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

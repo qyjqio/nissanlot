@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - GPS位置管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+    }
+    .stat-card.success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    .stat-card.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+    .stat-card.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    }
+    .map-container {
+        height: 400px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tachometer-alt text-primary"></i> 系统仪表板
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">总设备数</h4>
+                        <h2 class="mb-0">{{ stats.total_devices }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-mobile-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">在线设备</h4>
+                        <h2 class="mb-0">{{ stats.online_devices }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-wifi fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">注册用户</h4>
+                        <h2 class="mb-0">{{ stats.total_owners }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">可用软件</h4>
+                        <h2 class="mb-0">{{ stats.total_software }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-mobile fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 存储使用情况 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-hdd text-info"></i> 存储使用情况</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>已使用空间</span>
+                        <span>{{ "%.1f"|format(stats.storage_info.used_gb) }} GB / {{ "%.1f"|format(stats.storage_info.total_gb) }} GB</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if stats.storage_info.usage_percent > 80 %}bg-danger{% elif stats.storage_info.usage_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                             style="width: {{ stats.storage_info.usage_percent }}%"></div>
+                    </div>
+                    <small class="text-muted">使用率: {{ "%.1f"|format(stats.storage_info.usage_percent) }}%</small>
+                </div>
+                
+                {% if stats.storage_info.usage_percent > 80 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    存储空间不足，请及时清理数据！
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie text-success"></i> 设备状态分布</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-success">{{ stats.online_devices }}</h4>
+                            <small class="text-muted">在线</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h4 class="text-danger">{{ stats.total_devices - stats.online_devices }}</h4>
+                            <small class="text-muted">离线</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="text-info">{{ stats.total_devices }}</h4>
+                        <small class="text-muted">总计</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近位置更新 -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-map-marker-alt text-primary"></i> 最近位置更新</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_locations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>设备ID</th>
+                                <th>位置</th>
+                                <th>更新时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for location in recent_locations %}
+                            <tr>
+                                <td>{{ location.device_id }}</td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ "%.6f"|format(location.latitude) }}, {{ "%.6f"|format(location.longitude) }}
+                                    </small>
+                                </td>
+                                <td>{{ location.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showDeviceOnMap('{{ location.device_id }}')">
+                                        <i class="fas fa-map"></i> 查看
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                    <p>暂无位置数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bell text-warning"></i> 系统通知</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% if stats.storage_info.usage_percent > 80 %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">存储空间警告</h6>
+                                <small class="text-muted">存储使用率已达 {{ "%.1f"|format(stats.storage_info.usage_percent) }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.online_devices == 0 %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-wifi text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">设备离线</h6>
+                                <small class="text-muted">当前没有在线设备</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">系统正常运行</h6>
+                                <small class="text-muted">GPS位置管理系统运行正常</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshDashboard() {
+    location.reload();
+}
+
+function showDeviceOnMap(deviceId) {
+    // TODO: 实现地图显示功能
+    alert('地图功能开发中...\n设备ID: ' + deviceId);
+}
+
+function showMapView() {
+    alert('地图总览功能开发中...');
+}
+
+function showDeviceManagement() {
+    alert('设备管理功能开发中...');
+}
+
+function showOwnerManagement() {
+    alert('用户管理功能开发中...');
+}
+
+function showSoftwareManagement() {
+    alert('软件管理功能开发中...');
+}
+
+function showFenceManagement() {
+    alert('电子围栏功能开发中...');
+}
+
+function showSystemSettings() {
+    alert('系统设置功能开发中...');
+}
+
+// 自动刷新（每30秒）
+setInterval(function() {
+    // 只刷新统计数据，不刷新整个页面
+    fetch('/api/dashboard/stats')
+        .then(response => response.json())
+        .then(data => {
+            // 更新统计数据
+            console.log('Dashboard stats updated');
+        })
+        .catch(error => {
+            console.error('Failed to update dashboard stats:', error);
+        });
+}, 30000);
+</script>
+{% endblock %} 

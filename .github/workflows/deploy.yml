@@ -1,0 +1,52 @@
+name: 部署GPS系统到服务器
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 设置SSH密钥
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: 部署到服务器
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+          # 停止现有服务
+          if [ -d "/opt/gps-system" ]; then
+            cd /opt/gps-system
+            docker-compose down || true
+          fi
+          
+          # 下载最新代码并部署
+          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/deploy.sh | bash
+          
+          # 检查部署状态
+          sleep 30
+          if curl -k -s https://localhost >/dev/null 2>&1; then
+            echo "✅ 部署成功"
+          else
+            echo "❌ 部署可能失败"
+            exit 1
+          fi
+        '
+        
+    - name: 通知部署结果
+      if: always()
+      run: |
+        if [ ${{ job.status }} == 'success' ]; then
+          echo "🎉 GPS系统部署成功！"
+        else
+          echo "❌ GPS系统部署失败！"
+        fi 

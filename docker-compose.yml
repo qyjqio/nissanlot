@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  gps-app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./gps_system.db:/app/gps_system.db
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    depends_on:
+      - redis
+    networks:
+      - gps-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - gps-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - gps-app
+    restart: unless-stopped
+    networks:
+      - gps-network
+
+volumes:
+  redis_data:
+
+networks:
+  gps-network:
+    driver: bridge 

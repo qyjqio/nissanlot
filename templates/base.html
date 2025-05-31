@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GPS位置管理系统{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s;
+        }
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .status-online { color: #28a745; }
+        .status-offline { color: #dc3545; }
+        .status-disabled { color: #6c757d; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if session.admin_id %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">
+                            <i class="fas fa-map-marker-alt"></i> GPS管理系统
+                        </h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-tachometer-alt"></i> 仪表板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showMapView()">
+                                <i class="fas fa-map"></i> 地图总览
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showDeviceManagement()">
+                                <i class="fas fa-mobile-alt"></i> 设备管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showOwnerManagement()">
+                                <i class="fas fa-users"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSoftwareManagement()">
+                                <i class="fas fa-mobile"></i> 软件管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showFenceManagement()">
+                                <i class="fas fa-shield-alt"></i> 电子围栏
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSystemSettings()">
+                                <i class="fas fa-cog"></i> 系统设置
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="text-white">
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <strong>{{ session.admin_username }}</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">退出登录</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- 主内容区域 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+        {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
